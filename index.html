@@ -1,0 +1,144 @@
+<!doctype html>
+<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js lt-ie9 lt-ie8" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js lt-ie9" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Last.fm ♥ Rdio</title>
+  <meta name="description" content="A little project by Dan Munz to unify Last.fm loved tracks with Rdio search.">
+
+<link rel="shortcut icon" href="img/favicon.ico"> 
+<link rel="icon" type="image/ico" href="img/favicon.ico">
+
+  <meta name="viewport" content="width=device-width">
+  <link rel="stylesheet" href="css/style.css">
+
+  <link href='http://fonts.googleapis.com/css?family=Advent+Pro:400,600' rel='stylesheet' type='text/css'>
+
+  <script src="js/libs/modernizr-2.5.3.min.js"></script>
+
+</head>
+<body>
+
+  <!--[if lt IE 7]><p class=chromeframe>Your browser is <em>ancient!</em> <a href="http://browsehappy.com/">Upgrade to a different browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to experience this site.</p><![endif]-->
+  <header>
+<h1><span class="lastfm">Last.fm</span> &hearts; <span class="rdio">Rdio</span></h1>
+
+<div class="button"><span class="prompt"><span class="welcome">Show me my tracks!</span></span></div>
+
+  </header>
+  <div id="main" role="main">
+  
+  <div id="tracks">
+  </div>
+
+  </div>
+  <footer>
+A little project by <a href="http://www.twitter.com/dan_munz">@dan_munz</a> to bring Last.fm loved tracks closer to Rdio.
+
+Made mostly for my own use, but if you see this and like it, <a href="https://twitter.com/intent/tweet?text=Hey @dan_munz, I found your last.fm &hearts; rdio site, and it's pretty cool.">let me know</a>.
+
+  </footer>
+
+
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  <script>window.jQuery || document.write('<script src="js/libs/jquery-1.7.1.min.js"><\/script>')</script>
+
+  <script src="js/plugins.js"></script>
+  <script src="js/script.js"></script>
+  <script src="js/jquery.fittext.js"></script>
+  <script src="js/jgestures.js"></script>
+  <script src="js/jgestures.min.js"></script>
+
+
+  <script type="text/javascript">
+    $(document).ready(function () {
+    
+	var thisurl = $(location).attr('href'); //get the current URL
+	var lookingfor = /user=/; //define what we're looking for
+	var position = thisurl.search(lookingfor) + 5; //define where the ID would be
+	var userpermalink = thisurl.slice(position); //produce the ID
+
+	if (thisurl.toLowerCase().indexOf("user=") >= 0){
+	getalbums(userpermalink);
+	$('.welcome').text("Showing "+userpermalink+"'s tracks.<br/>Press here to see yours.");
+	}else{
+	console.log('Just FYI, you can navigate right to a specific user by hitting '+thisurl+'?user=[username].');
+    }
+
+    	var buttonpress = false;
+        	
+    	$(".button").click(function () {
+    		if (buttonpress == false) {
+			    $(".welcome").fadeOut(50, function() { $(this).remove(); });
+				$(".showing").fadeOut(50, function() { $(this).remove(); });
+				$(".permalink").fadeOut(50, function() { $(this).remove(); });
+				$(".prompt").attr('contenteditable', 'true');
+				$(".button").append('<span class="intro">Type a Last.fm username and press this button!<br/>(Seriously, just start typing.)</span>');
+				_gaq.push(['_trackEvent', 'Lastio', 'Button press 1', 'start']);
+       			buttonpress = true;
+    		} else {
+    			var username = $(".prompt").text();
+				$("#tracks").empty();
+				getalbums(username);
+    			$(".prompt").attr('contenteditable', 'false');
+    			$(".prompt").html("<span class='showing'>Now showing "+username+"'s favorites.</span>");
+				$("header").append("<span class='permalink'><a href='"+thisurl+"?user="+username+"'>Get the permalink.</a></span>");
+				_gaq.push(['_trackEvent', 'Lastio', 'Button press 2', username]);
+    			buttonpress = false;
+    		}
+    	});
+    	
+
+		$(".prompt").keyup(function() {
+		    $(".intro").fadeOut(50, function() { $(this).remove(); });
+		    
+		});    	
+
+    	function getalbums(username) {
+    		// get the json file
+    		$.getJSON('http://ws.audioscrobbler.com/2.0/?method=user.getlovedtracks&user=' + username + '&api_key=1849fee17d27c407ef419d220dd94729&format=json&cb=http://www.danielmunz.com', function (json) {
+    			// loop through the results in the json object
+    			$.each(json.lovedtracks.track, function (i, track) {
+    				if (track.image === undefined) {
+    					var imgurl = "http://placekitten.com/g/200/200";
+    				} else {
+    					var imgurl = findUrl(track.image, "extralarge");
+    				}
+    				$.getJSON('http://ws.audioscrobbler.com/2.0/?method=track.getInfo&artist=' + track.artist.name + '&track=' + track.name + '&api_key=1849fee17d27c407ef419d220dd94729&format=json&cb=http://www.danielmunz.com', function (specifictrack) {
+    					$("#tracks").append('<div class="card" id="track' + i + '"><a target="_blank" href="http://www.rdio.com/artist/' + track.artist.name.split(' ').join('_') + '/album/' + specifictrack.track.album.title.split(' ').join('_') + '/track/' + track.name.split(' ').join('_') + '"><div class="track"><div class="cover front" style="background-image:url(' + imgurl + ');"></div><div class="info back"><span class="title">' + track.name + '</span><span class="artist"><strong>' + track.artist.name + '</strong><br/>' + specifictrack.track.album.title + '</span></div></div></a></div>');
+    				});
+    			});
+    		});
+    	}
+    	$("h1").fitText(0.7, {
+    		minFontSize: '24px',
+    		maxFontSize: '72px'
+    	})
+    });
+
+    function findUrl(image, size) {
+    	var n, entry;
+    	for (n = 0; n < image.length; ++n) {
+    		// Get this entry from the array
+    		entry = image[n];
+    		// Is this the size we want?
+    		if (entry.size == size) { // (`size` is a valid identifier, can use a literal)
+    			// Yes, return this URL
+    			return entry["#text"]; // (`#text` is not, must use brackets and a string)
+    		}
+    	}
+    	return null; // Or "" or undefined or whatever you want to use for "not found"
+    }
+  </script>
+
+  <script>
+    var _gaq=[['_setAccount','UA-6102405-1'],['_trackPageview']];
+    (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+    g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
+    s.parentNode.insertBefore(g,s)}(document,'script'));
+  </script>
+</body>
+</html>
