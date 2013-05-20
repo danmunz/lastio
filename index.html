@@ -63,7 +63,7 @@ Made mostly for my own use, but if you see this and like it, <a href="https://tw
 
 	if (thisurl.toLowerCase().indexOf("user=") >= 0){
 	getalbums(userpermalink);
-	$('.welcome').text("Showing "+userpermalink+"'s tracks. Press here to see yours.");
+	$('.welcome').html("Showing "+userpermalink+"'s tracks.<br/>Press here to see yours.");
 	}else{
 	console.log('Just FYI, you can navigate right to a specific user by hitting '+thisurl+'?user=[username].');
     }
